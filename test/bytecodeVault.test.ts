@@ -1,34 +1,59 @@
-import {
-  time,
-  loadFixture,
-} from "@nomicfoundation/hardhat-toolbox/network-helpers";
-import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
-import { expect } from "chai";
-import { ethers } from "hardhat";
-describe("BytecodeVault", function () {
-  // We define a fixture to reuse the same setup in every test.
-  // We use loadFixture to run this setup once, snapshot that state,
-  // and reset Hardhat Network to that snapshot in every test.
+import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
+import { expect } from 'chai';
+import { ethers } from 'hardhat';
+import { Wallet } from 'ethers';
+describe('BytecodeVault', function () {
+  let owner: Wallet;
+  let user: Wallet;
+  let vault: any;
+  let solver: any;
+
   async function deployOneYearLockFixture() {
     // Contracts are deployed using the first signer/account by default
-    const [owner, someone] = await ethers.getSigners();
+    [owner, user] = await (ethers as any).getSigners();
+    vault = await (await ethers.getContractFactory('BytecodeVault'))
+      .connect(owner)
+      .deploy({ value: ethers.parseEther('1') });
+    expect(await vault.isSolved()).to.be.false;
+    console.log('vault', await vault.getAddress());
+    console.log('owner', await owner.getAddress());
+    console.log('user', await user.getAddress());
 
-    const BytecodeVault = await ethers.getContractFactory("BytecodeVault");
-    const vault = await BytecodeVault.connect(owner).deploy();
+    // Get solver bytecode and abi
+    const BytecodeVaultSolver = await ethers.getContractFactory(
+      'BytecodeVaultSolver'
+    );
+    const abi = BytecodeVaultSolver.interface.formatJson();
+    let bytecode: any = BytecodeVaultSolver.bytecode;
 
-    return { vault, owner, someone};
+    // Replace codesize, need to find out from https://www.evm.codes/playground?fork=shanghai
+    bytecode = bytecode.replace('015e', '0163');
+
+    // Replace fake vault address in bytecode
+    bytecode = bytecode.replace(
+      new RegExp('DDdDddDdDdddDDddDDddDDDDdDdDDdDDdDDDDDDd', 'gi'),
+      (await vault.getAddress()).replaceAll('0x', '')
+    );
+
+    // Add sequence to code
+    bytecode = bytecode + 'deadbeef';
+
+    // Make code length odd
+    bytecode = bytecode + 'dd';
+
+    // Create solver contract by newbytecode
+    const contractInstance = new ethers.ContractFactory(abi, bytecode, owner);
+    solver = await contractInstance.deploy();
+    const deploymentTx = await solver.deploymentTransaction();
+    console.log('inputData', deploymentTx.data);
   }
 
-  describe("Solve Challenges", function () {
-    it("solve", async function () {
-      const { vault, owner, someone } = await loadFixture(deployOneYearLockFixture);
-      console.log("owner", await vault.owner());
-
-      expect(await vault.owner()).to.equal(await owner.getAddress());
-    });
-
-
+  beforeEach(async function () {
+    await loadFixture(deployOneYearLockFixture);
   });
 
-
+  it('solve', async function () {
+    await solver.solve();
+    expect(await vault.isSolved()).to.be.true;
+  });
 });

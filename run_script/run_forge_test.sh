@@ -8,7 +8,8 @@ forge test --fork-url $RPC
 
 # For specific test fils
 # forge test --fork-url $RPC --fork-block-number $BLOCK --match-path test/fees/FG.t.sol  --gas-report
-# forge test --fork-url $RPC  --match-path test/SojiWalletFactory.t.sol  -vvv
+# forge test --fork-url $RPC  --match-path test/foundry/greeterGate.t.sol -vvv
+
 
 
 # For specific test cases
