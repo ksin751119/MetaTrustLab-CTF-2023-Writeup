@@ -4,12 +4,12 @@
 - [x] greeterVault
 - [x] greeterGate
 - [x] byteVault
-- [ ] Achilles
-- [ ] Who
-- [ ] StakingPool
-- [ ] DeFi Maze
+- [x] Achilles
+- [x] Who
+- [x] StakingPool
+- [x] DeFi Maze
 - [ ] ECDSA
-- [ ] guseeGame
+- [x] guseeGame
 - [ ] registry
 - [ ] swap
 - [ ] ByteDance
