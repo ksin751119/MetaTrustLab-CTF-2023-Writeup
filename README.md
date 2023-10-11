@@ -10,7 +10,7 @@
 - [x] DeFi Maze
 - [ ] ECDSA
 - [x] guseeGame
-- [ ] registry
+- [x] registry
 - [ ] swap
 - [ ] ByteDance
 - [ ] ETHStaking
